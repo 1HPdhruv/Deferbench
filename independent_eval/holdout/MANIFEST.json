@@ -1,0 +1,32 @@
+{
+  "schema_version": "deferbench.holdout-manifest/1",
+  "definitions_sha256": {
+    "I1.json": "e9e6d2719850cfa5e6827584820b888e1e00b400d2aeb5017a2f87308e935d29",
+    "I10.json": "b47f961627efdfef7226bd802637236b1c5b4809962b34d2b0a0e4ec2c21f8dc",
+    "I11.json": "aa0fb4f659015c8018f28eff2b760a1b2a6a2d2923c4fb76e0ae10c21ef52474",
+    "I12.json": "1ebff52b63e063187be52db70fd1d05a48d8bbc4216565775f4d23db10329168",
+    "I13.json": "e0598d601b0466669100cfa2343ebd9f3116e7fb45ce8b76b7e6c47021f08ed9",
+    "I14.json": "02fab3a00a569dfa6f199f20488ca8d7bc9de70dc1df11b0f48de8016ab3714a",
+    "I15.json": "293352dd0368f86472fac269f69fc11d5982a50624651775c6ee034042d2efaf",
+    "I16.json": "f4799561b7ebc5cf2de29a038d9d81ec90c4ff48b714ae699957a6468755e27d",
+    "I17.json": "f6a3d1d948f075dcc4d72937e8cfa0e2de0c4d18a33b76bf3ac015801d52def4",
+    "I18.json": "dc27530fb36300196aae4f0a670f7262d2385c503962b7f76ef3d0b07ec2cd0d",
+    "I19.json": "4d7429a8cf5ee7d55562221eee08226c24835c78b27f8bcdd4bb6b9193f61fa5",
+    "I2.json": "dff1afea54581029a5ce822787628397c7dda4c99c306741dbb13adbe4721208",
+    "I20.json": "16c71ab94770dc1690b524a913f5ee482488de0e3fc5e0d82fe3c157e8c8c2bf",
+    "I3.json": "403102f3a56266b27c62640c4b6577c7ee710a043a0021e51d6a28553568333d",
+    "I4.json": "70e158ae144066976f1d51acdfbca53da4865d64f2e6a0af67796c527a6036de",
+    "I5.json": "a7a2aa5186bc736ed6fb382e16e5cb05ed92ffbe6fd0c1f57225ba0da63a1b54",
+    "I6.json": "7bc78236e528a0f0aa98dfefd703731095ad590cc25917517b78f6dbef1e9ded",
+    "I7.json": "7199a9a7c266361cd8b185b27474878606efbe3e62b27ebd05527b1f479af8df",
+    "I8.json": "f553c6791f277aa454f32f8e08881d803fd64fab294b4e79e03bbac5e8ec1682",
+    "I9.json": "83d5a0628724b5031e31f889ffcd044d292e1173270cb740f0fe90415d212a52"
+  },
+  "expected_sha256": "b90df2cb6b4e2a97e4a148ff6271737db8ff7f3a6a70a3aaf7b4102a9536fd3e",
+  "independent": false,
+  "authors": [
+    "isolated-subagent a5fd04bc1f0a3cf18"
+  ],
+  "attestation": "Authored by an isolated subagent instance of the same model family as the defence author; given only independent_eval/author_kit; self-reported exposure log in holdout/AUTHOR_LOG.md; NOT a human-independent author; dev/holdout mechanisms known to the custodian.",
+  "note": "Commit this manifest BEFORE running the evaluation; the expected-file hash prevents post-hoc edits."
+}

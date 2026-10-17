@@ -1,0 +1,24 @@
+{
+  "schema_version": "deferbench.holdout-manifest/1",
+  "definitions_sha256": {
+    "H1.json": "baac0180219da243847cddc61715cbcaa8e7b322c653e80b688835181583d8d9",
+    "H10.json": "6762d5124abb0210201ee0cc100570c5cdf5a66bdc8af499c205ddb7506732df",
+    "H11.json": "59b45e6b7cd636c49ecf8ab17bc51ebd2e0e65e1c82ca32ef56e776799f3efdd",
+    "H12.json": "ca6ed2925243420990aac7ea40fc9f33069772ce737bfebffca67f0398b4e38b",
+    "H2.json": "bf6e56f9b30bc4ea1161c20af2fc03604f78f5adb80453ee6f5e7e48af6553bf",
+    "H3.json": "ad2cc658d16ab204bb539f9325bc9e54d996ea16fdc16301b6f28b4f72bc60c7",
+    "H4.json": "fcc8389560c3bf2a2906e5d0bf108fd8aa431c4dc39337803f38b2753b918438",
+    "H5.json": "ab98efd1f467d09bff601c791ad3f2351f03429559ce3cd62317fb78942e8e0c",
+    "H6.json": "cabcd065a1f0c5edabf83f598fa33c856463a9951fa979095014bd28c77416cc",
+    "H7.json": "216924a4c397d70450ff95bd6c3458762fc9ca4ed8ddff0d5c6d3feff9f8d9fc",
+    "H8.json": "9daf652cab13347e12e9582f4da4962bbd3f9c21cc3d15932357be97aa2ac0f4",
+    "H9.json": "ef1ae6227097c9aa2a481088490a9ad3e9851ffee330e1104058b22acd3f95f4"
+  },
+  "expected_sha256": "b938974214cda9f04775febf0832c5eef096c4f606f412ae986cd56a97495c05",
+  "independent": false,
+  "authors": [
+    "DeferBench development model session"
+  ],
+  "attestation": "",
+  "note": "Commit this manifest BEFORE running the evaluation; the expected-file hash prevents post-hoc edits."
+}

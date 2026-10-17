@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "deferbench"
+version = "0.2.0"
+description = "Benchmark and reference defence for delayed execution of AI-agent-authored code"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7,<9"]
+
+[project.scripts]
+deferbench = "deferbench.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["deferbench*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "unit: pure-Python unit test (no subprocess execution of payloads)",
+  "integration: spawns real processes in a disposable workspace",
+  "replay: replays scenario events through a defence without executing the final command",
+  "e2e: full scenario run including real execution and loopback sink",
+]

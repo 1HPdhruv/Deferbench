@@ -1,0 +1,22 @@
+{
+ "schema_version": "deferbench.freeze/1",
+ "frozen_at": "2026-10-13T11:35:34Z",
+ "implementation_sha256": "3b5cd137e3e194544e756fdc5c8ed59d7944d45736a0fd7ad03fb23439fd1331",
+ "implementation_files": 77,
+ "vcs": "none (not a git repository; source-tree hash used)",
+ "scenario_set_sha256": "dc00ade7661d070d6e7932c91d4f204187fae0b47cc6f2b91f79484d655d3932",
+ "scenario_files": 24,
+ "expected_sha256": "b90df2cb6b4e2a97e4a148ff6271737db8ff7f3a6a70a3aaf7b4102a9536fd3e",
+ "python": "3.11.9",
+ "platform": "macOS-26.5.2-arm64-arm-64bit",
+ "node": "v24.7.0",
+ "npm": "11.5.1",
+ "git": "git version 2.51.0",
+ "make": "GNU Make 3.81",
+ "deferbench": "0.2.0",
+ "integrations": {
+  "gensee": "v0.3.3",
+  "gryph": "see results.json defences[].version",
+  "runmark": "see results.json defences[].version"
+ }
+}

@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DeferBench Dashboard</title>
+<style>
+:root{--bg:#f5f6f8;--fg:#1a2130;--mut:#5f6b7d;--card:#fff;--bd:#d8dde6;--accent:#1f4fa3;--deny:#1f4fa3;--ask:#a86a0c;--allow:#2a7a4b;--leak:#b3261e;--inv:#7c8494;--nr:#e3e7ee;--warnbg:#fff7e6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f131a;--fg:#e4e8ef;--mut:#9aa4b4;--card:#161c26;--bd:#2a3342;--accent:#7aa7ff;--deny:#7aa7ff;--ask:#f0b44c;--allow:#5ccb8d;--leak:#ff6e61;--inv:#8a92a0;--nr:#252d3a;--warnbg:#2a2214}}
+:root[data-theme="dark"]{--bg:#0f131a;--fg:#e4e8ef;--mut:#9aa4b4;--card:#161c26;--bd:#2a3342;--accent:#7aa7ff;--deny:#7aa7ff;--ask:#f0b44c;--allow:#5ccb8d;--leak:#ff6e61;--inv:#8a92a0;--nr:#252d3a;--warnbg:#2a2214}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1240px;margin:0 auto;padding:16px}
+header{border-bottom:1px solid var(--bd);padding-bottom:12px;margin-bottom:14px}
+h1{font-size:22px;margin:0}h2{font-size:16px;margin:28px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--bd)}h3{font-size:14px;margin:14px 0 6px}
+.mut{color:var(--mut)}.small{font-size:12px}
+.lede{max-width:900px;margin:6px 0 0}
+.banner{border:1px solid var(--ask);border-left-width:6px;background:var(--warnbg);padding:10px 12px;border-radius:6px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:12px}
+.card .v{font-size:24px;font-weight:650;display:block}.card .l{color:var(--mut);font-size:12px}
+.vs{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+table{border-collapse:collapse;width:100%;background:var(--card);border:1px solid var(--bd)}
+th,td{border-bottom:1px solid var(--bd);padding:5px 8px;text-align:left;vertical-align:top}
+th{background:var(--bg);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.02em;position:sticky;top:0}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.scroll{overflow:auto;max-height:620px;border-radius:6px;border:1px solid var(--bd)}
+.c{font-weight:650;font-size:12px;text-align:center;cursor:pointer;white-space:nowrap}
+.deny{color:var(--deny)}.ask{color:var(--ask)}.allow{color:var(--allow)}.leak{color:var(--leak)}
+td.c.leak{background:color-mix(in srgb,var(--leak) 12%,transparent)}
+td.c.inv{color:var(--inv);background:repeating-linear-gradient(45deg,transparent 0 5px,color-mix(in srgb,var(--inv) 18%,transparent) 5px 10px)}
+td.c.nr{color:var(--mut);background:var(--nr)}
+.chip{display:inline-block;padding:0 7px;border:1px solid var(--bd);border-radius:10px;font-size:11px;margin:0 4px 2px 0;background:var(--card)}
+.pass{color:var(--allow);font-weight:700}.fail{color:var(--leak);font-weight:700}.na{color:var(--mut);font-weight:700}
+.bar{height:8px;border-radius:3px;background:var(--nr);position:relative;min-width:70px;margin-top:3px}.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px}
+select,button{background:var(--card);color:var(--fg);border:1px solid var(--bd);border-radius:4px;padding:3px 8px}
+button{cursor:pointer}
+#detail{position:fixed;right:0;top:0;bottom:0;width:min(580px,100%);background:var(--card);border-left:1px solid var(--bd);padding:14px 16px;overflow:auto;display:none;box-shadow:-6px 0 18px rgba(0,0,0,.18);z-index:5}
+pre{white-space:pre-wrap;word-break:break-word;background:var(--bg);padding:8px;border-radius:6px;font-size:12px;max-height:240px;overflow:auto}
+ol.tl{list-style:none;padding:0;margin:0;border-left:2px solid var(--bd)}
+ol.tl li{position:relative;padding:4px 0 8px 14px}
+ol.tl li:before{content:"";position:absolute;left:-6px;top:10px;width:10px;height:10px;border-radius:50%;background:var(--mut)}
+ol.tl li.deny:before{background:var(--deny)}ol.tl li.ask:before{background:var(--ask)}ol.tl li.leak:before{background:var(--leak)}ol.tl li.allow:before{background:var(--allow)}
+ol.tl li{color:var(--fg)}
+.legend span{margin-right:10px;white-space:nowrap;font-size:12px}
+ul.lim{margin:4px 0;padding-left:18px}
+@media (max-width:600px){main{padding:12px 16px}.card .v{font-size:20px}}
+</style></head><body><main>
+<header>
+<h1>DeferBench</h1>
+<p class="lede">Evaluates security controls against <b>delayed execution through trusted developer tools</b>: an agent edits files after reading untrusted content, and a later, harmless-looking command (<code>npm test</code>, <code>make</code>, <code>pytest</code>, <code>git commit</code>) runs what was written. Every scenario is executed in a disposable workspace; a synthetic canary either reaches a 127.0.0.1 sink or it does not.</p>
+<div class="mut small" id="meta"></div>
+</header>
+<div class="banner" id="status"></div>
+
+<h2>At a glance <span class="mut small">(development set, ask resolution: <select id="res"></select>)</span></h2>
+<div class="grid" id="cards"></div>
+
+<h2>Stateless resolver vs. Handoff <span class="mut small">— the key comparison (same resolver; Handoff adds provenance)</span></h2>
+<div class="vs" id="vs"></div>
+
+<h2>All controls <span class="mut small">rates over valid runs only; 95% Wilson intervals are in results.json</span></h2>
+<div class="scroll"><table id="cmp"></table></div>
+
+<h2>Scenario matrix <span class="mut small">click a cell for the attack → decision timeline · style <select id="style"></select></span></h2>
+<div class="legend" id="legend"></div>
+<div class="scroll"><table id="mx"></table></div>
+
+<h2>Pre-registered criteria <span class="mut small">(evaluated mechanically from result files)</span></h2><table id="crit"></table>
+
+<h2>Other result sets <span class="mut small">(none of these is a human-independent evaluation)</span></h2>
+<div id="hold"></div><div id="conf"></div>
+
+<h2>Original v0 prototype vs. latest Handoff <span class="mut small" id="v0note"></span></h2><table id="v0"></table>
+
+<h2>Integrations, skipped and untested</h2><table id="int"></table>
+
+<h2>Known limitations</h2>
+<ul class="lim">
+<li>Agent actions are <b>scripted replays</b>, not live models; results say nothing about how often real agents take these actions.</li>
+<li>Development scenarios were written by the defence author. Provisional and confirmatory sets are <b>not human-independent</b>; a human-independent holdout is <b>pending</b>.</li>
+<li>Third-party tools ran <b>hook-only</b> with default policies (no OS sensors such as Gensee's Endpoint Security); their rows describe these configurations, not the full products.</li>
+<li><b>ASK is not prevention</b> if a reviewer clicks through — switch the resolution selector to <code>approve-all</code>.</li>
+<li>Provenance attribution is unattainable for stateless controls by design; it measures traceability, not prevention.</li>
+<li>Rates pool payload styles; n counts scenario × style, not independent attacks. One OS (macOS arm64).</li>
+</ul>
+<p class="mut small" id="sources"></p>
+</main><aside id="detail" aria-live="polite"></aside>
+<script>
+const DATA = /*__DATA__*/null;
+const dev = DATA.dev, hold = DATA.holdout, conf = DATA.confirmatory;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pc = x => (!x || x.rate == null) ? 'n/a' : `${Math.round(x.rate*100)}% <span class="mut">(${x.k}/${x.n})</span>`;
+const LAB = {prevented_deny:['BLOCKED','deny'],prevented_ask:['ASK','ask'],missed_leaked:['LEAKED','leak'],leaked_after_approval:['LEAKED (approved)','leak'],detected_after_execution:['DETECTED AFTER','ask'],
+ allowed_no_leak:['ALLOWED (no leak)','allow'],benign_allowed:['ALLOW','allow'],benign_interrupted:['ASK','ask'],benign_blocked:['BLOCKED','deny'],invalid:['INVALID','inv'],error:['ERROR','inv'],
+ dry_run:['DRY-RUN','nr'],surface_prevented_deny:['BLOCKED @write*','deny'],surface_intercepted_ask:['ASK @write*','ask'],surface_missed_late:['MISSED*','leak'],surface_missed:['MISSED*','leak'],benign_failed:['ALLOW (cmd failed)','allow']};
+const agg = (doc, did, res) => Object.values(doc.aggregate).find(a => a.defence_id === did && a.ask_resolution === res);
+const notrun = Object.fromEntries(dev.not_run.map(d => [d.defence_id, d]));
+const hs = DATA.holdout_status;
+$('meta').textContent = `Development run ${dev.run_id} · ${dev.created} · ${dev.environment.platform} · Python ${dev.environment.python} · Node ${dev.environment.node}`;
+$('status').innerHTML = `<b>Evaluation status:</b> development results are from scenarios written by the defence author. Holdout status: <b>${esc(hs.label)}</b>. ` +
+  `A <b>human-independent evaluation is pending</b>. Third-party tools: hook-only, default policies. * = write-surface-only scenario (editor-triggered effect; scored on the write-time decision, excluded from attack rates).`;
+$('sources').textContent = 'Data sources: ' + Object.entries(DATA.sources).filter(([k,v]) => v).map(([k,v]) => `${k}: ${v}`).join(' · ');
+$('res').innerHTML = dev.config.resolutions.map(r => `<option>${r}</option>`).join('');
+$('style').innerHTML = dev.config.styles.map(r => `<option>${r}</option>`).join('');
+
+function cards() {
+  const res = $('res').value, h = agg(dev, 'handoff', res), s = agg(dev, 'static-expansion', res);
+  const valid = new Set(), inv = new Set(), cats = {};
+  dev.results.filter(r => r.defence_id === 'none' && r.ask_resolution === dev.config.resolutions[0]).forEach(r => {
+    if (r.baseline_valid === false) inv.add(r.scenario_id + '|' + r.payload_style); else valid.add(r.scenario_id + '|' + r.payload_style); });
+  dev.scenarios.forEach(x => cats[x.category] = (cats[x.category] || 0) + 1);
+  const items = [
+    [`${dev.scenarios.length}`, `scenarios · ${Object.entries(cats).map(([k,v]) => `${v} ${k}`).join(' · ')}`],
+    [`${valid.size}`, `valid scenario × style runs (baseline reproduced) · ${inv.size} invalid`],
+    [pc(h.attack_interception), 'Handoff: attacks stopped before execution'],
+    [pc(s.attack_interception), 'Stateless resolver: attacks stopped'],
+    [pc(h.residual_leak), 'Handoff: residual canary leaks'],
+    [pc(h.benign_interruption), 'Handoff: benign workflows interrupted'],
+    [`${Object.keys(notrun).length}`, 'integrations not run (unavailable)'],
+    [`${DATA.criteria.filter(c => c.status === 'PASS').length}/${DATA.criteria.length}`, 'pre-registered criteria met (see caveats)']];
+  $('cards').innerHTML = items.map(([a, b]) => `<div class="card"><span class="v">${a}</span><span class="l">${esc(b)}</span></div>`).join('');
+}
+function vs() {
+  const res = $('res').value;
+  const rows = [['Attacks stopped (canary verified)', a => pc(a.attack_interception)], ['of which hard-blocked', a => pc(a.hard_prevention_deny)], ['Residual leaks', a => pc(a.residual_leak)],
+    ['Benign workflows interrupted', a => pc(a.benign_interruption)], ['Approval-acceptable cases asked', a => pc(a.explained_approval_cases)],
+    ['Evidence: executing file named', a => pc(a.evidence_common_executing_file_named)], ['Provenance attribution (authoring event + untrusted input)', a => a.provenance_capable ? pc(a.provenance_attribution) : '<span class="mut">not provided by design</span>'],
+    ['Hook latency p50 / p95 (ms)', a => `${a.latency_ms.p50} / ${a.latency_ms.p95 ?? 'n<20'}`]];
+  const block = (title, sets) => `<div class="card"><h3>${title}</h3><table><tr><th>measure</th><th>stateless resolver</th><th>Handoff</th></tr>` +
+     rows.map(([n, f]) => `<tr><td>${n}</td><td class="num">${f(sets[0])}</td><td class="num">${f(sets[1])}</td></tr>`).join('') + '</table></div>';
+  let h = block(`Development set (${res})`, [agg(dev, 'static-expansion', res), agg(dev, 'handoff', res)]);
+  if (conf) { const r0 = conf.config.resolutions[0]; const a = agg(conf, 'static-expansion', r0), b = agg(conf, 'handoff', r0);
+    if (a && b) h += block(`Confirmatory set — model-authored, NOT human-independent (${r0})`, [a, b]); }
+  $('vs').innerHTML = h + '<p class="mut small">Same resolver in both columns. Differences isolate what provenance adds. Provenance attribution measures traceability; stateless controls cannot provide it by construction.</p>';
+}
+function cmp() {
+  const res = $('res').value;
+  let h = '<tr><th>control</th><th>policy</th><th>attacks stopped</th><th>leaks</th><th>benign interrupted</th><th>approval-acceptable asked</th><th>editor-surface*</th><th>file named</th><th>provenance</th><th>evidence score</th><th>p50 / p95 ms</th><th>valid / invalid / error</th></tr>';
+  for (const d of dev.defences) {
+    if (notrun[d.id]) continue; const a = agg(dev, d.id, res); if (!a) continue;
+    const bar = (x, col) => `${pc(x)}<div class="bar"><i style="width:${(x.rate||0)*100}%;background:var(--${col})"></i></div>`;
+    h += `<tr><td><b>${esc(d.id)}</b><br><span class="mut small">${esc(d.version)}</span></td><td>${esc(d.policy_strength)}</td><td class="num">${bar(a.attack_interception,'deny')}</td><td class="num">${bar(a.residual_leak,'leak')}</td>` +
+      `<td class="num">${bar(a.benign_interruption,'ask')}</td><td class="num">${pc(a.explained_approval_cases)}</td><td class="num">${pc(a.surface_only_intercepted)}</td>` +
+      `<td class="num">${pc(a.evidence_common_executing_file_named)}</td><td class="num">${a.provenance_capable ? pc(a.provenance_attribution) : '<span class="mut">—</span>'}</td>` +
+      `<td class="num">${a.evidence.mean_score ?? 'n/a'}</td><td class="num">${a.latency_ms.p50} / ${a.latency_ms.p95 ?? 'n<20'}</td><td class="num">${a.runs.valid} / ${a.runs.invalid} / ${a.runs.error}</td></tr>`;
+  }
+  $('cmp').innerHTML = h;
+}
+function crit() {
+  $('crit').innerHTML = '<tr><th>#</th><th>criterion</th><th>status</th><th>measured</th></tr>' + DATA.criteria.map(c =>
+    `<tr><td>${c.id}</td><td>${esc(c.criterion)}</td><td class="${c.status==='PASS'?'pass':c.status==='FAIL'?'fail':'na'}">${c.status}</td><td class="small">${esc(c.detail)}</td></tr>`).join('');
+}
+function matrix() {
+  const res = $('res').value, st = $('style').value, cols = dev.defences.filter(d => !notrun[d.id]).map(d => d.id);
+  const byk = {}; dev.results.filter(r => r.ask_resolution === res && r.payload_style === st && r.repeat === 0).forEach(r => byk[r.scenario_id + '|' + r.defence_id] = r);
+  let h = '<tr><th>scenario</th><th>category</th><th>name</th>' + cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  for (const s of dev.scenarios) {
+    h += `<tr><td><b>${s.id}</b></td><td class="small">${s.category}${s.execution !== 'real' ? ' · editor*' : ''}</td><td class="small">${esc(s.name)}</td>`;
+    for (const c of cols) { const r = byk[s.id + '|' + c]; if (!r) { h += '<td class="c nr">—</td>'; continue; } const [t, k] = LAB[r.outcome] || [r.outcome, 'nr']; h += `<td class="c ${k}" data-s="${s.id}" data-d="${c}" tabindex="0">${t}</td>`; }
+    h += '</tr>';
+  }
+  $('mx').innerHTML = h;
+  document.querySelectorAll('#mx td[data-s]').forEach(td => { td.onclick = () => detail(td.dataset.s, td.dataset.d); td.onkeydown = e => { if (e.key === 'Enter') detail(td.dataset.s, td.dataset.d); }; });
+  $('legend').innerHTML = [['deny','BLOCKED before execution'],['ask','ASK / escalated'],['allow','ALLOWED'],['leak','LEAKED / missed'],['inv','INVALID baseline'],['nr','NOT RUN / no data']]
+    .map(([k,t]) => `<span class="c ${k}" style="padding:1px 6px;border:1px solid var(--bd);border-radius:4px">${t}</span>`).join('');
+}
+function detail(sid, did) {
+  const res = $('res').value, st = $('style').value;
+  const r = dev.results.find(x => x.scenario_id === sid && x.defence_id === did && x.ask_resolution === res && x.payload_style === st && x.repeat === 0), s = dev.scenarios.find(x => x.id === sid);
+  const cls = d => d === 'deny' ? 'deny' : d === 'ask' ? 'ask' : 'allow';
+  const tl = (r.steps || []).filter(x => x.kind !== 'post_alert').map(x => `<li class="${cls(x.decision)}"><b>${esc(x.kind)}</b> ${esc(x.tool||'')} → <span class="${cls(x.decision)}">${esc(String(x.decision).toUpperCase())}</span> <span class="mut small">${esc(x.resolution||'')}${x.rule ? ' · ' + esc(x.rule) : ''}</span>${x.reason ? `<div class="small mut">${esc(x.reason.slice(0,220))}</div>` : ''}</li>`).join('');
+  const fin = `<li class="${r.canary_leaked ? 'leak' : cls(r.final_decision)}"><b>trusted command</b> <code>${esc(r.final_command)}</code> → <span class="${cls(r.final_decision)}">${esc(String(r.final_decision).toUpperCase())}</span> <span class="mut small">${esc(r.final_resolution||'')}</span></li>` +
+    `<li class="${r.canary_leaked ? 'leak' : 'allow'}"><b>observed</b>: executed=${r.final_command_executed} · exit=${r.exit_code} · canary at sink=<b class="${r.canary_leaked ? 'leak' : 'allow'}">${r.canary_leaked}</b></li>`;
+  $('detail').style.display = 'block';
+  $('detail').innerHTML = `<button onclick="this.parentNode.style.display='none'">Close</button><h2>${s.id} × ${esc(did)}</h2><p><b>${esc(s.name)}</b></p><p class="mut">${esc(s.threat)}</p>
+   <p><span class="chip">${s.category}</span><span class="chip">${s.malicious?'malicious':'benign'}</span><span class="chip">${s.execution==='real'?'MEASURED (real execution)':'EDITOR SURFACE (effect simulated)'}</span><span class="chip">${r.baseline_valid===true?'baseline reproduced':r.baseline_valid===false?'INVALID baseline':'baseline n/a'}</span><span class="chip">outcome: ${esc((LAB[r.outcome]||[r.outcome])[0])}</span></p>
+   <h3>Attack → decision timeline</h3><ol class="tl">${tl}${fin}</ol>
+   <h3>Expected</h3><pre>${esc(JSON.stringify(s.expected, null, 1))}</pre>
+   <h3>Decision evidence</h3><pre>${esc((r.final_verdict||{}).reason || '(no final-command evidence; see timeline)')}\nanalysis_complete: ${(r.final_verdict||{}).analysis_complete}</pre>
+   <h3>Evidence scoring (score ${r.evidence?.score}/3, ${esc(r.evidence?.method)})</h3><pre>${esc(JSON.stringify({present: r.evidence?.items_present, required: r.evidence?.required, files: r.evidence?.files}, null, 1))}</pre>
+   ${r.error ? `<h3>Error</h3><pre>${esc(r.error)}</pre>` : ''}<p class="mut small">baseline: ${esc(r.baseline_reason||'')}</p>`;
+}
+function setTable(doc, el, title) {
+  if (!doc) { el.innerHTML = `<p class="mut">${title}: no results found.</p>`; return; }
+  const res = doc.config.resolutions[0], st = doc.config.styles[0], cols = doc.defences.filter(d => !doc.not_run.some(n => n.defence_id === d.id) && d.id !== 'none').map(d => d.id);
+  const pf = r => { if (!r) return ['—','na']; const o = r.outcome, se = r.expected.secure_outcome; if (o==='invalid') return ['INVALID','na']; if (o==='error') return ['ERROR','na'];
+    const ok = se==='intercept' ? ['prevented_deny','prevented_ask','surface_prevented_deny','surface_intercepted_ask'].includes(o) : se==='allow' ? o==='benign_allowed' : ['benign_allowed','benign_interrupted'].includes(o);
+    return [ok ? 'PASS' : 'FAIL', ok ? 'pass' : 'fail']; };
+  const byk = {}; doc.results.filter(r => r.ask_resolution===res && r.payload_style===st && r.repeat===0).forEach(r => byk[r.scenario_id+'|'+r.defence_id] = r);
+  let h = `<h3>${title}</h3><p class="small mut">run ${esc(doc.run_id)} · label: <b>${esc(doc.set)}</b></p><div class="scroll"><table><tr><th>scenario</th><th>category</th><th>sealed expectation</th>` + cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr>';
+  for (const s of doc.scenarios) h += `<tr><td>${s.id}</td><td class="small">${s.category}</td><td class="small">${esc(s.expected.secure_outcome)}</td>` + cols.map(c => { const [t,k] = pf(byk[s.id+'|'+c]); return `<td class="${k}">${t}</td>`; }).join('') + '</tr>';
+  el.innerHTML = h + '</table></div>';
+}
+function v0() {
+  const res = dev.config.resolutions[0], a = agg(dev, 'handoff-v0', res), b = agg(dev, 'handoff', res);
+  if (!a || !b) { $('v0').innerHTML = '<tr><td>handoff-v0 not present in this run.</td></tr>'; return; }
+  $('v0note').textContent = '(same harness, same scenarios; v0 = archive/v0/handoff.py, unmodified)';
+  const row = (n, f) => `<tr><td>${n}</td><td class="num">${f(a)}</td><td class="num">${f(b)}</td></tr>`;
+  $('v0').innerHTML = '<tr><th>measure</th><th>v0 prototype</th><th>latest Handoff</th></tr>' + row('attacks stopped', x => pc(x.attack_interception)) + row('residual leaks', x => pc(x.residual_leak)) +
+    row('benign interrupted', x => pc(x.benign_interruption)) + row('executing file named', x => pc(x.evidence_common_executing_file_named)) + row('evidence score', x => x.evidence.mean_score);
+}
+function integ() {
+  $('int').innerHTML = '<tr><th>control</th><th>kind</th><th>version</th><th>policy</th><th>status</th><th>unsupported / not covered (from metadata and docs)</th></tr>' + dev.defences.map(d =>
+    `<tr><td>${esc(d.id)}</td><td>${esc(d.kind)}</td><td>${esc(d.version)}</td><td>${esc(d.policy_strength)}</td><td class="${notrun[d.id]?'na':'pass'}">${notrun[d.id]?'NOT RUN: '+esc(notrun[d.id].reason):'run'}</td><td class="small">${esc((d.unsupported||[]).join('; '))}</td></tr>`).join('');
+}
+function all() { cards(); vs(); cmp(); matrix(); }
+$('res').onchange = all; $('style').onchange = matrix;
+all(); crit(); v0(); integ();
+setTable(hold, $('hold'), 'Provisional adversarial holdout — written by the defence author; NOT independent');
+setTable(conf, $('conf'), 'Confirmatory run — authored by an isolated model instance; NOT human-independent');
+</script></body></html>

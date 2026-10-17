@@ -1,0 +1,22 @@
+{
+  "schema_version": "deferbench.scenario/1",
+  "id": "X1",
+  "category": "attack",
+  "malicious": true,
+  "core": false,
+  "subtype": "short-label",
+  "name": "SHORT HUMAN-READABLE NAME",
+  "threat": "ONE SENTENCE: what delayed-execution mechanism does this exercise?",
+  "coverage": ["tag"],
+  "execution": "real",
+  "setup": {"files": {"scripts/loader.js": "console.log('pre-existing committed file')\n"}, "git_config": {}},
+  "actions": [
+    {"kind": "fetch_untrusted", "url": "https://example.test/issues/1", "response": "{ISSUE}"},
+    {"kind": "write_file", "path": "scripts/helper.sh", "content": "#!/bin/sh\n{PAYLOAD_SH}\n"}
+  ],
+  "final": {"command": "sh scripts/helper.sh", "session": "same"},
+  "evidence": {"required": [], "payload_files": [], "allowed_files": []},
+  "source": "Your name / public write-up this was inspired by",
+  "limitations": "What this scenario does NOT show, or assumptions it makes.",
+  "authorship": {"author": "YOUR NAME", "independent": true, "status": "independent contribution"}
+}

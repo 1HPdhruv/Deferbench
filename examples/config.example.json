@@ -1,0 +1,23 @@
+{
+  "_comment": "Machine-readable example of the knobs DeferBench reads (all also available as CLI flags / env vars). Not auto-loaded.",
+  "env": {
+    "DEFERBENCH_RESULTS_DIR": "./results",
+    "DEFERBENCH_SCENARIOS_DIR": "./scenarios",
+    "DEFERBENCH_TIMEOUT": "60",
+    "DEFERBENCH_GENSEE_BIN": "./.integrations/gensee/gensee",
+    "DEFERBENCH_GRYPH_BIN": "./.integrations/gryph/gryph",
+    "DEFERBENCH_RUNMARK_BIN": "./.integrations/runmark/runmark"
+  },
+  "benchmark": {
+    "defences": "all-available",
+    "payload_styles": ["plain", "signature"],
+    "ask_resolutions": ["oracle", "approve-all"],
+    "repeat": 1,
+    "dry_run": false
+  },
+  "handoff_policy": {
+    "deny_risky_tainted": true, "ask_risky": true, "ask_opaque": true, "ask_tainted": true, "ask_cross_session": true,
+    "unknown_policy": "ask_if_tainted", "ask_surface_writes": true, "bind_approvals": true, "fail_mode": "ask",
+    "llm_classifier": "disabled (not implemented in this release; deterministic rules only)"
+  }
+}
