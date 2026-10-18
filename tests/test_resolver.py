@@ -71,3 +71,44 @@ def test_makefile_unknown_variable_program_marked(ws):
 def test_make_include_literal_followed(ws):
     write_text(ws, "Makefile", "-include b.mk\nall:\n\techo a\n"); write_text(ws, "b.mk", "extra:\n\techo b\n")
     assert "b.mk" in res(ws, "make extra").files
+
+
+@pytest.mark.parametrize(
+    "prefix_option",
+    ["--prefix apps/widget", "--prefix=apps/widget"],
+)
+def test_npm_prefix_resolves_package_scripts(ws, prefix_option):
+    write_text(
+        ws,
+        "apps/widget/package.json",
+        '{"scripts":{"test":"node test.js"}}',
+    )
+    write_text(ws, "apps/widget/test.js", "require('./helper.js');")
+    write_text(ws, "apps/widget/helper.js", "module.exports = 1;")
+
+    c = res(ws, f"npm {prefix_option} test")
+
+    assert "apps/widget/package.json" in c.files
+    assert "apps/widget/test.js" in c.files
+    assert "apps/widget/helper.js" in c.files
+    assert c.complete
+
+
+def test_npm_prefix_outside_workspace_is_blocking(ws, tmp_path):
+    import shlex
+
+    outside = tmp_path / "outside-prefix"
+    outside.mkdir()
+    c = Resolver(ws).resolve(
+        f"npm --prefix {shlex.quote(str(outside))} test"
+    )
+
+    assert any(
+        u.kind == "outside" and u.blocking
+        for u in c.unresolved
+    )
+
+
+def test_npm_dynamic_prefix_is_blocking(ws):
+    c = res(ws, "npm --prefix '$PROJECT_DIR' test")
+    assert any(u.kind == "dynamic" and u.blocking for u in c.unresolved)
