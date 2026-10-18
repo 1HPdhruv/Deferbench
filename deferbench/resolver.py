@@ -249,22 +249,89 @@ class Resolver:
 
     # ---- npm
     def _npm(self, prog, args, ctx, via, depth):
-        sub = [a for a in args if not a.startswith("-")]
-        if not sub: return
-        if sub[0] in ("exec", "x", "dlx"): self._unres("opaque", f"{prog} {sub[0]} fetches/executes a package"); return
-        if sub[0] in ("run", "run-script", "rum", "urn"):
-            if len(sub) < 2: return
-            name = sub[1]
-        elif sub[0] in ("test", "t", "tst"): name = "test"
-        elif sub[0] in ("start", "stop", "restart"): name = sub[0]
-        elif sub[0] in ("install", "i", "ci", "add", "update", "rebuild", "link", "install-test", "it", "ic"):
-            self._npm_lifecycle(prog, NPM_INSTALL_LIFECYCLE, ctx, via, depth)
-            self._npm_local_deps(prog, ctx, via, depth)
-            self._unres("dependency-lifecycle", f"{prog} {sub[0]}: lifecycle scripts of installed dependencies are not resolved", False)
+        npm_ctx = Ctx(ctx.cwd)
+        cleaned = []
+        prefix_seen = False
+        i = 0
+
+        while i < len(args):
+            arg = args[i]
+
+            if arg == "--":
+                cleaned.extend(args[i:])
+                break
+
+            prefix = None
+            if prog == "npm" and arg == "--prefix":
+                if (prefix_seen or i + 1 >= len(args)
+                        or args[i + 1].startswith("-")):
+                    self._unres("opaque", "npm --prefix missing a path or repeated")
+                    return
+                prefix = args[i + 1]
+                i += 2
+            elif prog == "npm" and arg.startswith("--prefix="):
+                if prefix_seen:
+                    self._unres("opaque", "npm --prefix repeated")
+                    return
+                prefix = arg.split("=", 1)[1]
+                i += 1
+            else:
+                cleaned.append(arg)
+                i += 1
+                continue
+
+            prefix_seen = True
+            if (not prefix or prefix.startswith("~")
+                    or any(ch in prefix for ch in ("$", "`", "*", "?", "[", "]", "{", "}"))):
+                self._unres("dynamic", "npm --prefix path is empty or uses expansion/glob syntax")
+                return
+
+            target = os.path.realpath(os.path.join(ctx.cwd, prefix))
+            if not self._inside(target):
+                self._unres("outside", f"npm --prefix resolves outside workspace: {prefix}")
+                return
+            if not os.path.isdir(target):
+                self._unres("missing", f"npm --prefix directory not found: {prefix}")
+                return
+
+            npm_ctx.cwd = target
+
+        sub = [a for a in cleaned if not a.startswith("-")]
+        if not sub:
+            if not prefix_seen:
+                return
+            # npm with no explicit command defaults to install.
+            sub = ["install"]
+
+        if sub[0] in ("exec", "x", "dlx"):
+            self._unres("opaque", f"{prog} {sub[0]} fetches/executes a package")
             return
-        elif prog == "yarn" and len(sub) >= 1: name = sub[0]
-        else: return
-        self._npm_lifecycle(prog, ["pre" + name, name, "post" + name], ctx, via, depth)
+        if sub[0] in ("run", "run-script", "rum", "urn"):
+            if len(sub) < 2:
+                return
+            name = sub[1]
+        elif sub[0] in ("test", "t", "tst"):
+            name = "test"
+        elif sub[0] in ("start", "stop", "restart"):
+            name = sub[0]
+        elif sub[0] in ("install", "i", "ci", "add", "update", "rebuild",
+                        "link", "install-test", "it", "ic"):
+            self._npm_lifecycle(prog, NPM_INSTALL_LIFECYCLE, npm_ctx, via, depth)
+            self._npm_local_deps(prog, npm_ctx, via, depth)
+            self._unres(
+                "dependency-lifecycle",
+                f"{prog} {sub[0]}: lifecycle scripts of installed dependencies are not resolved",
+                False,
+            )
+            return
+        elif prog == "yarn" and len(sub) >= 1:
+            name = sub[0]
+        else:
+            return
+
+        self._npm_lifecycle(
+            prog, ["pre" + name, name, "post" + name], npm_ctx, via, depth
+        )
 
     def _pkg(self, ctx):
         d = ctx.cwd
